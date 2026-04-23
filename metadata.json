@@ -1,0 +1,6 @@
+{
+  "name": "Dashboard Ejecutivo de Riesgo Hipotecario",
+  "description": "Análisis y scoring de salud de cartera hipotecaria del banco. Construido en HTML/JS puro usando Tailwind y Chart.js.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

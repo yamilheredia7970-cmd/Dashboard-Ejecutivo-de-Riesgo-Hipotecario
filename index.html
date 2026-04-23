@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard Ejecutivo de Riesgo Hipotecario</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <style>
+      body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+      /* Loader styles */
+      #loader { transition: opacity 0.3s ease; }
+      .spinner { border: 4px solid rgba(0,0,0,0.1); border-left-color: #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+  </head>
+  <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex font-sans">
+
+    <!-- Pantalla de Carga -->
+    <div id="loader" class="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center">
+      <div class="spinner mb-4"></div>
+      <h2 class="text-xl font-semibold text-gray-700">Procesando Cartera Hipotecaria...</h2>
+      <p id="loader-status" class="text-sm text-gray-500 mt-2">Conectando a fuente de datos</p>
+    </div>
+
+    <!-- Contenido Principal -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden w-full">
+      
+      <!-- Top Header -->
+      <header class="flex justify-between items-center border-b-2 border-slate-200 p-4 sm:p-5 z-10 shrink-0 bg-transparent">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-900 leading-tight m-0">Análisis de Cartera Hipotecaria</h2>
+          <p class="text-sm text-slate-500 m-0">Monitoreo de Salud Crediticia y Segmentación Estratégica &bull; Q4 2026</p>
+        </div>
+        <div class="flex items-center space-x-4">
+          <div class="text-xs font-semibold text-blue-800 bg-blue-100 px-3 py-1 rounded-full uppercase flex items-center">
+            Datos Consolidados
+          </div>
+        </div>
+      </header>
+
+      <!-- Scrollable Content -->
+      <div class="flex-1 overflow-auto p-5 space-y-4">
+        
+        <!-- Sección: KPIs Principales -->
+        <section>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <!-- KPI 1 -->
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
+              <div class="text-slate-500 text-xs font-semibold uppercase mb-1 flex items-center justify-between">
+                Cartera Total
+                <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              </div>
+              <div id="kpi-total" class="text-xl font-bold text-slate-900">$0.00 M</div>
+              <div id="kpi-growth" class="text-[11px] text-emerald-500 mt-1">
+                ↑ --% vs Año Anterior
+              </div>
+            </div>
+            <!-- KPI 2 -->
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
+              <div class="text-slate-500 text-xs font-semibold uppercase mb-1">Monto Promedio</div>
+              <div id="kpi-avg-amount" class="text-xl font-bold text-slate-900">$0.00</div>
+              <div id="kpi-avg-term" class="text-[11px] text-slate-500 mt-1">-- meses plazo prom.</div>
+            </div>
+            <!-- KPI 3 -->
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
+              <div class="text-slate-500 text-xs font-semibold uppercase mb-1 flex justify-between">
+                Tasa Morosidad
+                <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+              </div>
+              <div id="kpi-arrears-rate" class="text-xl font-bold text-slate-900">--%</div>
+              <div id="kpi-default-rate" class="text-[11px] text-red-500 mt-1">--% default rate</div>
+            </div>
+            <!-- KPI 4 -->
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
+              <div class="text-slate-500 text-xs font-semibold uppercase mb-1">LTV Promedio</div>
+              <div id="kpi-ltv" class="text-xl font-bold text-slate-900">--%</div>
+              <div id="kpi-avg-rate" class="text-[11px] text-slate-500 mt-1">Tasa Int: --% Prom.</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Insights Ejecutivos Inteligentes -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <!-- Resumen y Recomendaciones -->
+          <div class="col-span-1 lg:col-span-3 bg-white border border-slate-200 rounded-lg overflow-hidden flex flex-col items-stretch">
+            <h3 class="px-4 py-3 border-b border-slate-100 bg-slate-50 text-sm font-bold text-slate-700 m-0">Hallazgos Estratégicos & Predicciones</h3>
+            <div class="p-4 grid grid-cols-1 md:grid-cols-3 gap-6 text-sm flex-1">
+              <div>
+                <h4 class="font-semibold text-emerald-600 flex items-center mb-1"><svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg> Hallazgos Positivos</h4>
+                <p id="insight-positive" class="text-slate-600 leading-relaxed m-0">Calculando...</p>
+              </div>
+              <div>
+                <h4 class="font-semibold text-amber-600 flex items-center mb-1"><svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg> Riesgos Detectados</h4>
+                <p id="insight-risks" class="text-slate-600 leading-relaxed m-0">Calculando...</p>
+              </div>
+              <div>
+                <h4 class="font-semibold text-blue-600 flex items-center mb-1"><svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0z"></path><path d="M9.8 10.999a2.997 2.997 0 003.111-2.946A2.997 2.997 0 009.8 5.107a2.997 2.997 0 00-3.11 2.946A2.997 2.997 0 009.8 11z"></path></svg> Recomendaciones & Predicción</h4>
+                <p id="insight-strategic" class="text-slate-600 leading-relaxed m-0">Calculando...</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Bloque Analítico Central -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+          
+          <!-- Concentración por Riesgo (Doughnut) -->
+          <div class="bg-white border border-slate-200 rounded-lg overflow-hidden flex flex-col col-span-1">
+            <div class="px-4 py-3 border-b border-slate-100 bg-slate-50 text-sm font-bold text-slate-700">Distribución por Score de Riesgo</div>
+            <div class="p-4 relative h-64 flex-1">
+              <canvas id="chartRiskDist"></canvas>
+            </div>
+          </div>
+
+          <!-- Evolución Temporal (Line) -->
+          <div class="bg-white border border-slate-200 rounded-lg overflow-hidden flex flex-col col-span-1 lg:col-span-1 xl:col-span-2">
+            <div class="px-4 py-3 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+              <span class="text-sm font-bold text-slate-700">Evolución de Originación y Calidad Crediticia</span>
+              <div class="flex items-center space-x-2 text-xs font-normal">
+                <input type="date" id="filter-start" class="border border-slate-300 rounded px-2 py-1 text-slate-600 focus:outline-none focus:border-blue-500 bg-white">
+                <span class="text-slate-400">a</span>
+                <input type="date" id="filter-end" class="border border-slate-300 rounded px-2 py-1 text-slate-600 focus:outline-none focus:border-blue-500 bg-white">
+              </div>
+            </div>
+            <div class="p-4 relative h-64 flex-1">
+              <canvas id="chartTimeline"></canvas>
+            </div>
+          </div>
+
+          <!-- Análisis Bivariado: LTV vs Riesgo (Scatter) -->
+          <div class="bg-white border border-slate-200 rounded-lg overflow-hidden flex flex-col col-span-1 lg:col-span-2 xl:col-span-2">
+            <div class="px-4 py-3 border-b border-slate-100 bg-slate-50 text-sm font-bold text-slate-700">Perfil de LTV vs Tasa de Interés</div>
+            <div class="p-4 relative h-72 flex-1">
+              <canvas id="chartScatter"></canvas>
+            </div>
+          </div>
+
+          <!-- Segmentación por Ingreso (Bar) -->
+          <div class="bg-white border border-slate-200 rounded-lg overflow-hidden flex flex-col col-span-1">
+            <div class="px-4 py-3 border-b border-slate-100 bg-slate-50 text-sm font-bold text-slate-700">Impacto por Segmento Demo</div>
+            <div class="p-4 relative h-72 flex-1">
+              <canvas id="chartSegmentation"></canvas>
+            </div>
+          </div>
+          
+        </section>
+
+        <!-- Alertas de Cartera & Escenarios Predictivos -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <!-- Alertas -->
+          <div class="col-span-1 bg-white border border-slate-200 rounded-lg overflow-hidden flex flex-col">
+            <div class="px-4 py-3 border-b border-red-100 bg-red-50 text-sm font-bold text-red-700 flex items-center">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+              Monitor de Alertas Activas
+            </div>
+            <div class="p-4 flex-1 text-slate-600" id="portfolio-alerts">
+              <!-- Inyectado via JS -->
+              <div class="text-sm">Analizando datos activos...</div>
+            </div>
+          </div>
+          
+          <!-- Escenarios Predictivos -->
+          <div class="col-span-1 lg:col-span-2 bg-white border border-slate-200 rounded-lg overflow-hidden flex flex-col">
+            <div class="px-4 py-3 border-b border-slate-100 bg-slate-50 text-sm font-bold text-slate-700 flex items-center">
+              <svg class="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+              Escenarios Predictivos (Stress Test Macro)
+            </div>
+            <div class="p-4 flex flex-col md:flex-row gap-6">
+              <div class="flex-1">
+                <label class="text-xs font-semibold text-slate-500 uppercase flex justify-between">
+                  <span>Shock en Tasa de Interés Nominal</span>
+                  <span class="text-blue-600 font-bold px-1 rounded bg-blue-50">+<span id="shock-value">0.0</span>%</span>
+                </label>
+                <input type="range" id="rate-shock-slider" min="0" max="5" step="0.5" value="0" class="w-full mt-3 cursor-pointer accent-blue-600">
+                <p class="text-[10px] text-slate-400 mt-2 leading-tight">Simula un incremento macroeconómico en las tasas que estrese la capacidad de pago del deudor y reasigne scores de riesgo general.</p>
+              </div>
+              <div class="flex-1 grid grid-cols-2 gap-3">
+                <div class="bg-slate-50 p-3 rounded border border-slate-200 shadow-sm">
+                  <div class="text-[10px] uppercase font-bold text-slate-500 mb-1">Mora Proyectada (E)</div>
+                  <div id="stress-default-rate" class="text-xl font-bold text-slate-900">--%</div>
+                  <div class="text-[10px] text-slate-400 mt-1">Nuevos defaults previstos</div>
+                </div>
+                <div class="bg-slate-50 p-3 rounded border border-slate-200 shadow-sm">
+                  <div class="text-[10px] uppercase font-bold text-slate-500 mb-1">Capital Expuesto</div>
+                  <div id="stress-high-risk" class="text-xl font-bold text-slate-900">$-- M</div>
+                  <div class="text-[10px] text-slate-400 mt-1">En vol. de riesgo alto</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tabla Ejecutiva Detailed -->
+         <section class="bg-white border border-slate-200 rounded-lg overflow-hidden flex flex-col">
+          <div class="px-4 py-3 border-b border-slate-100 bg-slate-50 text-sm font-bold text-slate-700 flex justify-between items-center">
+            Top Exposiciones de Riesgo & Casos Atípicos
+            <button class="px-3 py-1.5 text-xs font-semibold bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded shadow-sm transition">Exportar CSV</button>
+          </div>
+          <div class="overflow-x-auto p-0 flex-1">
+            <table class="w-full text-left text-sm text-slate-600">
+              <thead class="bg-white border-b border-slate-200 text-slate-500 font-semibold text-xs uppercase">
+                <tr>
+                  <th class="px-5 py-3 font-semibold">ID Préstamo</th>
+                  <th class="px-5 py-3 font-semibold">Monto USD</th>
+                  <th class="px-5 py-3 font-semibold">LTV (%)</th>
+                  <th class="px-5 py-3 font-semibold">Tasa (%)</th>
+                  <th class="px-5 py-3 font-semibold">Ingreso/Monto</th>
+                  <th class="px-5 py-3 font-semibold">Estado Civil/Tipo</th>
+                  <th class="px-5 py-3 font-semibold text-center">Score de Riesgo</th>
+                </tr>
+              </thead>
+              <tbody id="risk-table-body" class="divide-y divide-slate-100">
+                <!-- Se inyecta por JS -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Insight Ejecutivo Final -->
+        <section class="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden flex flex-col text-slate-100 shadow-md">
+          <div class="px-5 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-800/50">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-300">Veredicto Estratégico Global</h3>
+            <span class="flex h-3 w-3 relative">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+            </span>
+          </div>
+          <div class="p-6 text-sm leading-relaxed" id="final-insight-text">
+            Calculando veredicto institucional...
+          </div>
+        </section>
+
+      </div>
+    </main>
+
+    <!-- Scripts y Lógica Principal Vanilla JS -->
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
+
